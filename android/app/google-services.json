@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "952522435986",
+    "firebase_url": "https://netcad-mobile.firebaseio.com",
+    "project_id": "netcad-mobile",
+    "storage_bucket": "netcad-mobile.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:952522435986:android:618cc4b85ee67be924a54b",
+        "android_client_info": {
+          "package_name": "com.example.denemee"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "952522435986-3pp2fku38pujpvjqi6c2tpaeqlsg0c28.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBypY4k7Xogc2aWy1e-LG1HgZvQIH4t0IE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "952522435986-3pp2fku38pujpvjqi6c2tpaeqlsg0c28.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

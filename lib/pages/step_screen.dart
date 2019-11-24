@@ -1,0 +1,346 @@
+import 'dart:async';
+
+import 'package:denemee/custom_widgets/custom_widget_pair.dart';
+import 'package:denemee/interfaces/IOpenExercise.dart';
+import 'package:denemee/pages/exercise_screen.dart';
+import 'package:fab_menu/fab_menu.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:pedometer/pedometer.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:percent_indicator/circular_percent_indicator.dart';
+import 'dart:math';
+
+
+class StepPage extends StatefulWidget {
+
+
+  @override
+  _MyHomePageState createState() => _MyHomePageState();
+}
+
+class _MyHomePageState extends State<StepPage> {
+
+  final flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+
+  String buttonName;
+
+  bool _isPlayWorking = true;
+
+  double _stepCounts = 0;
+  double _convert;
+  double _kmx;
+  double burnedx;
+  double percentStepToTarget = 0.0;
+  String _stepCountValue = "0";
+  String _calories = "0.0";
+  int targetSteps = 3000;
+  String _km = "0.00";
+
+  StreamSubscription<int> _streamSubscription;
+
+  IOpenExercise iOpenExercise;
+
+  int totalSavedCount=0;
+  bool sensorIsWorking=true;
+
+  void playWorking() {
+    setState(() {
+      //_isPlayWorking=_isPlayWorking?false:true;
+
+      sensorIsWorking=!sensorIsWorking;
+
+      if (_isPlayWorking) {
+        _isPlayWorking = false;
+        // cancelListening();
+        pauseListening();
+      } else {
+        _isPlayWorking = true;
+        if(_streamSubscription.isPaused){
+          resumeListening();
+        }else{
+         // startListening();
+        }
+      }
+    });
+  }
+
+  Future<void> initPlatformState() async {
+    startListening();
+  }
+
+  void startListening() {
+    Pedometer _pedometer = new Pedometer();
+    _streamSubscription = _pedometer.pedometerStream.listen(_onData,
+        onError: _onError, onDone: _onDone, cancelOnError: true);
+
+  }
+
+  void _onData(int stepCountValue) async {
+    print('on data state');
+    print('$stepCountValue');
+
+    setState(() {
+      if(sensorIsWorking){
+
+        totalSavedCount++;
+       // stepCountValue=totalSavedCount;
+        print('sensor state : $totalSavedCount');
+        _stepCountValue = "$totalSavedCount";
+        percentStepToTarget = totalSavedCount.toDouble() / targetSteps.toDouble();
+      }else{
+        print('sensor state is false');
+        totalSavedCount=totalSavedCount;
+      }
+    });
+
+    if(sensorIsWorking){
+      var dist = totalSavedCount; //pasamos el entero a una variable llamada dist
+      double y = (dist + .0); //lo convertimos a double una forma de varias
+      setState(() {
+
+        _stepCounts =
+            y; //lo pasamos a un estado para ser capturado ya convertido a double
+      });
+      var long3 = (_stepCounts);
+      long3 = num.parse(y.toStringAsFixed(2));
+      var long4 = (long3 / 10000);
+
+      int decimals = 1;
+      int fac = pow(10, decimals);
+      double d = long4;
+      d = (d * fac).round() / fac;
+      print("d: $d");
+
+      getDistanceRun(_stepCounts);
+      getBurnedRun();
+
+      setState(() {
+        _convert = d;
+        print(_convert);
+      });
+    }
+
+
+
+  }
+
+  //function to determine the distance run in kilometers using number of steps
+  void getDistanceRun(double _stepCounts) {
+    var distance = ((_stepCounts * 78) / 100000);
+    distance = num.parse(distance.toStringAsFixed(2)); //dos decimales
+    var distancekmx = distance * 34;
+    distancekmx = num.parse(distancekmx.toStringAsFixed(2));
+    //print(distance.runtimeType);
+    setState(() {
+      _km = "$distance";
+      //print(_km);
+    });
+    setState(() {
+      _kmx = num.parse(distancekmx.toStringAsFixed(2));
+    });
+  }
+
+  //function to determine the calories burned in kilometers using number of steps
+  void getBurnedRun() {
+    setState(() {
+      var calories = _kmx; //dos decimales
+      _calories = "$calories";
+      //print(_calories);
+    });
+  }
+
+  void _onDone() => print("Finished pedometer tracking");
+
+  void _onError(error) => print("Flutter Pedometer Error: $error");
+
+  void cancelListening() {
+    _streamSubscription.cancel();
+  }
+
+  void pauseListening() {
+
+    _streamSubscription.pause();
+  }
+
+  void resumeListening() {
+    _streamSubscription.resume();
+
+  }
+
+  void resetListening() {
+    setState(() {
+      int stepCountValue = 0;
+      stepCountValue = 0;
+      _stepCountValue = "$stepCountValue";
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    initPlatformState();
+
+  }
+
+
+  @override
+  Widget build(BuildContext context) {
+    // TODO: implement build
+    return new Scaffold(
+        backgroundColor: Colors.white,
+
+
+        body: SafeArea(
+          child: Stack(
+            children: <Widget>[
+
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: FloatingActionButton(
+                  backgroundColor: Colors.transparent,
+                  child: Icon(FontAwesomeIcons.running,color: Colors.cyan,),
+                  onPressed: (){
+
+                  },
+                ),
+              ),
+
+              Column(
+                children: <Widget>[
+                  SizedBox(
+                    height: 20.0,
+                  ),
+                  Text(
+                    "Rekor: 0 Adım",
+                    style:
+                    TextStyle(color: Colors.deepPurpleAccent, fontSize: 22.0),
+                  ),
+                  SizedBox(
+                    height: 30.0,
+                  ),
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 30.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: <Widget>[
+                        FloatingActionButton(
+                          splashColor: Colors.deepOrange,
+                          backgroundColor: Colors.white,
+                          child: Icon(
+                            _isPlayWorking ? Icons.pause : Icons.play_arrow,color: Colors.cyan,
+                            size: 35.0,
+                          ),
+                          onPressed: () {
+                            playWorking();
+                          },
+                        ),
+
+                        FloatingActionButton(
+                          splashColor: Colors.deepOrange,
+                          backgroundColor: Colors.cyan,
+                          child: Icon(Icons.add, size:30.0,),
+
+                          onPressed: () {
+                           //exerciseTimeAlert(context);
+                            //Navigator.of(context).push(MaterialPageRoute(builder: (context)=>ExercisePage()));
+
+                          },
+                        )
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    flex: 1,
+                    child: Center(
+                        child: CircularPercentIndicator(
+                          radius: MediaQuery.of(context).size.width / 1.8,
+                          progressColor: Colors.cyan,
+                          circularStrokeCap: CircularStrokeCap.round,
+                          backgroundColor: Colors.black45,
+                          lineWidth: 20.0,
+                          percent: percentStepToTarget,
+                          animation: false,
+                          center: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: <Widget>[
+                              Column(
+                                children: <Widget>[
+                                  Text(
+                                    "Hedef",
+                                    style: TextStyle(fontSize: 24.0),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  Text(
+                                    "$targetSteps",
+                                    style: TextStyle(fontSize: 22.0),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ],
+                              ),
+                              SizedBox(
+                                height: 20.0,
+                              ),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: <Widget>[
+                                  Icon(
+                                    FontAwesomeIcons.walking,
+                                    size: 30.0,
+                                    color: Colors.cyan,
+                                  ),
+                                  Text(
+                                    '$_stepCountValue',
+                                    style:
+                                    TextStyle(color: Colors.cyan, fontSize: 30.0),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        )),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 15.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: <Widget>[
+                        Expanded(
+                          flex: 1,
+                          child: CustomWidgetPair(
+                              iconColor: Colors.yellow,
+                              icon: FontAwesomeIcons.road,
+                              data: "$_km",
+                              title: "Km",
+                              sizeBoxHeight: 5.0),
+                        ),
+                        Expanded(
+                          flex: 1,
+                          child: CustomWidgetPair(
+                              iconColor: Colors.orange,
+                              icon: FontAwesomeIcons.burn,
+                              data: "$_calories",
+                              title: "Kcal",
+                              sizeBoxHeight: 5.0),
+                        ),
+                        Expanded(
+                          flex: 1,
+                          child: CustomWidgetPair(
+                              iconColor: Colors.redAccent,
+                              icon: FontAwesomeIcons.stopwatch,
+                              data: "0sa 0 dk 0sn",
+                              title: "Yürüyüş Süresi",
+                              sizeBoxHeight: 5.0),
+                        )
+                      ],
+                    ),
+                  )
+                ],
+              ),
+            ],
+
+          ),
+        ));
+  }
+}
