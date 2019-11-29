@@ -1,29 +1,25 @@
 import 'dart:async';
-
-import 'package:denemee/custom_widgets/custom_widget_pair.dart';
-import 'package:denemee/interfaces/IOpenExercise.dart';
-import 'package:denemee/pages/exercise_screen.dart';
-import 'package:fab_menu/fab_menu.dart';
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:pedometer/pedometer.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:percent_indicator/circular_percent_indicator.dart';
 import 'dart:math';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:denemee/constants/firebase_constants.dart';
+import 'package:denemee/custom_widgets/custom_widget_pair.dart';
+import 'package:denemee/models/daily_model.dart';
+import 'package:denemee/utils/time_utils.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:liquid_progress_indicator/liquid_progress_indicator.dart';
+import 'package:pedometer/pedometer.dart';
 
 class StepPage extends StatefulWidget {
-
+  const StepPage({Key key}) : super(key: key);
 
   @override
   _MyHomePageState createState() => _MyHomePageState();
 }
 
 class _MyHomePageState extends State<StepPage> {
-
-  final flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
-
   String buttonName;
 
   bool _isPlayWorking = true;
@@ -31,36 +27,138 @@ class _MyHomePageState extends State<StepPage> {
   double _stepCounts = 0;
   double _convert;
   double _kmx;
-  double burnedx;
+  double burnedX;
   double percentStepToTarget = 0.0;
   String _stepCountValue = "0";
-  String _calories = "0.0";
+  String _calories = "0.00";
   int targetSteps = 3000;
-  String _km = "0.00";
+  String _distance = "0.00";
 
   StreamSubscription<int> _streamSubscription;
+  Pedometer _pedometer;
+  int totalSavedCount = 0;
+  bool sensorIsWorking = true;
+  Firestore _fireStore;
+  DailyModel dailyModel;
+  Timestamp startTime;
+  Timestamp endTime;
+  int walkingTime;
+  int totalStepFromFireStore = 0;
 
-  IOpenExercise iOpenExercise;
+  Stopwatch stopwatch = Stopwatch();
 
-  int totalSavedCount=0;
-  bool sensorIsWorking=true;
+  final duration = const Duration(seconds: 1);
+
+  var walkingTimeDuration = "00:00:00";
+
+  @override
+  void initState() {
+    super.initState();
+
+    _fireStore = Firestore.instance;
+    startTime = Timestamp.fromMillisecondsSinceEpoch(
+        new DateTime.now().millisecondsSinceEpoch);
+
+    // if the stream had no results, this will be null
+    // if the stream has one or more results, this will be the last result
+
+    initPlatformState();
+
+    loadDailySteps();
+
+    startTimer();
+  }
+
+  @override
+  void dispose() {
+
+    stopwatch.stop();
+
+    if (totalSavedCount > 1) {
+      endTime = Timestamp.fromMillisecondsSinceEpoch(
+          new DateTime.now().millisecondsSinceEpoch);
+      walkingTime = (endTime.millisecondsSinceEpoch ~/ 1000) -
+          (startTime.millisecondsSinceEpoch ~/ 1000);
+
+      dailyModel = DailyModel(
+          calories: double.parse(_calories),
+          distance: double.parse(_distance),
+          endTime: endTime,
+          memberKey: "BDUZU",
+          startTime: startTime,
+          stepCount: totalSavedCount,
+          walkingTime: walkingTime);
+      _fireStore
+          .collection(FireBaseConstants.dbName_daily)
+          .document()
+          .setData(dailyModel.toMAp(), merge: true)
+          .whenComplete(() => {});
+    }
+
+    super.dispose();
+    print('step screen dispose method');
+  }
+
+  void loadDailySteps() {
+    setState(() {
+      Firestore.instance
+          .collection(FireBaseConstants.dbName_daily)
+          .orderBy(FireBaseConstants.startTime_constant)
+          .where(FireBaseConstants.startTime_constant,
+              isGreaterThan: getDateStamps(getNowDate()),
+              isLessThan: getDateStamps(getDateDifference(day: 1)))
+          .snapshots()
+          .listen((data) => {
+                data.documents.forEach((d) => {
+                      totalStepFromFireStore +=
+                          d[FireBaseConstants.stepCount_constant]
+                    })
+              });
+    });
+  }
+
+  void pauseAndPlayButtonPressed() {
+    setState(() {
+      if (stopwatch.isRunning) {
+        stopwatch.stop();
+      } else {
+        stopwatch.start();
+        startTimer();
+      }
+    });
+  }
+
+  void startTimer() {
+    stopwatch.start();
+    Timer(duration, keepRunning);
+  }
+
+  void keepRunning() {
+    if (stopwatch.isRunning) {
+      startTimer();
+    }
+
+    setState(() {
+      walkingTimeDuration = timeToDisplayStopwatch(stopwatch);
+    });
+  }
 
   void playWorking() {
     setState(() {
       //_isPlayWorking=_isPlayWorking?false:true;
 
-      sensorIsWorking=!sensorIsWorking;
-
       if (_isPlayWorking) {
         _isPlayWorking = false;
+        sensorIsWorking = false;
         // cancelListening();
         pauseListening();
       } else {
         _isPlayWorking = true;
-        if(_streamSubscription.isPaused){
+        sensorIsWorking = true;
+        if (_streamSubscription.isPaused) {
           resumeListening();
-        }else{
-         // startListening();
+        } else {
+          // startListening();
         }
       }
     });
@@ -71,10 +169,9 @@ class _MyHomePageState extends State<StepPage> {
   }
 
   void startListening() {
-    Pedometer _pedometer = new Pedometer();
+    _pedometer = new Pedometer();
     _streamSubscription = _pedometer.pedometerStream.listen(_onData,
         onError: _onError, onDone: _onDone, cancelOnError: true);
-
   }
 
   void _onData(int stepCountValue) async {
@@ -82,24 +179,21 @@ class _MyHomePageState extends State<StepPage> {
     print('$stepCountValue');
 
     setState(() {
-      if(sensorIsWorking){
-
+      if (sensorIsWorking) {
         totalSavedCount++;
-       // stepCountValue=totalSavedCount;
+        // stepCountValue=totalSavedCount;
         print('sensor state : $totalSavedCount');
         _stepCountValue = "$totalSavedCount";
-        percentStepToTarget = totalSavedCount.toDouble() / targetSteps.toDouble();
-      }else{
-        print('sensor state is false');
-        totalSavedCount=totalSavedCount;
+        percentStepToTarget =
+            totalSavedCount.toDouble() / targetSteps.toDouble();
       }
     });
 
-    if(sensorIsWorking){
-      var dist = totalSavedCount; //pasamos el entero a una variable llamada dist
+    if (sensorIsWorking) {
+      var dist =
+          totalSavedCount; //pasamos el entero a una variable llamada dist
       double y = (dist + .0); //lo convertimos a double una forma de varias
       setState(() {
-
         _stepCounts =
             y; //lo pasamos a un estado para ser capturado ya convertido a double
       });
@@ -121,9 +215,6 @@ class _MyHomePageState extends State<StepPage> {
         print(_convert);
       });
     }
-
-
-
   }
 
   //function to determine the distance run in kilometers using number of steps
@@ -134,7 +225,7 @@ class _MyHomePageState extends State<StepPage> {
     distancekmx = num.parse(distancekmx.toStringAsFixed(2));
     //print(distance.runtimeType);
     setState(() {
-      _km = "$distance";
+      _distance = "$distance";
       //print(_km);
     });
     setState(() {
@@ -160,13 +251,11 @@ class _MyHomePageState extends State<StepPage> {
   }
 
   void pauseListening() {
-
     _streamSubscription.pause();
   }
 
   void resumeListening() {
     _streamSubscription.resume();
-
   }
 
   void resetListening() {
@@ -178,44 +267,33 @@ class _MyHomePageState extends State<StepPage> {
   }
 
   @override
-  void initState() {
-    super.initState();
-    initPlatformState();
-
-  }
-
-
-  @override
   Widget build(BuildContext context) {
     // TODO: implement build
     return new Scaffold(
         backgroundColor: Colors.white,
-
-
         body: SafeArea(
           child: Stack(
             children: <Widget>[
-
               Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: FloatingActionButton(
                   backgroundColor: Colors.transparent,
-                  child: Icon(FontAwesomeIcons.running,color: Colors.cyan,),
-                  onPressed: (){
-
-                  },
+                  child: Icon(
+                    FontAwesomeIcons.running,
+                    color: Colors.cyan,
+                  ),
+                  onPressed: () {},
                 ),
               ),
-
               Column(
                 children: <Widget>[
                   SizedBox(
                     height: 20.0,
                   ),
                   Text(
-                    "Rekor: 0 Adım",
-                    style:
-                    TextStyle(color: Colors.deepPurpleAccent, fontSize: 22.0),
+                    "Bugünlük: $totalStepFromFireStore",
+                    style: TextStyle(
+                        color: Colors.deepPurpleAccent, fontSize: 22.0),
                   ),
                   SizedBox(
                     height: 30.0,
@@ -229,23 +307,25 @@ class _MyHomePageState extends State<StepPage> {
                           splashColor: Colors.deepOrange,
                           backgroundColor: Colors.white,
                           child: Icon(
-                            _isPlayWorking ? Icons.pause : Icons.play_arrow,color: Colors.cyan,
+                            _isPlayWorking ? Icons.pause : Icons.play_arrow,
+                            color: Colors.cyan,
                             size: 35.0,
                           ),
                           onPressed: () {
                             playWorking();
+                            pauseAndPlayButtonPressed();
                           },
                         ),
-
                         FloatingActionButton(
                           splashColor: Colors.deepOrange,
                           backgroundColor: Colors.cyan,
-                          child: Icon(Icons.add, size:30.0,),
-
+                          child: Icon(
+                            Icons.add,
+                            size: 30.0,
+                          ),
                           onPressed: () {
-                           //exerciseTimeAlert(context);
-                            //Navigator.of(context).push(MaterialPageRoute(builder: (context)=>ExercisePage()));
-
+                            //exerciseTimeAlert(context);
+                            Navigator.of(context).pushNamed("/exercise_screen");
                           },
                         )
                       ],
@@ -254,52 +334,60 @@ class _MyHomePageState extends State<StepPage> {
                   Expanded(
                     flex: 1,
                     child: Center(
-                        child: CircularPercentIndicator(
-                          radius: MediaQuery.of(context).size.width / 1.8,
-                          progressColor: Colors.cyan,
-                          circularStrokeCap: CircularStrokeCap.round,
-                          backgroundColor: Colors.black45,
-                          lineWidth: 20.0,
-                          percent: percentStepToTarget,
-                          animation: false,
-                          center: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: <Widget>[
-                              Column(
-                                children: <Widget>[
-                                  Text(
-                                    "Hedef",
-                                    style: TextStyle(fontSize: 24.0),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                  Text(
-                                    "$targetSteps",
-                                    style: TextStyle(fontSize: 22.0),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                ],
-                              ),
-                              SizedBox(
-                                height: 20.0,
-                              ),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: <Widget>[
-                                  Icon(
-                                    FontAwesomeIcons.walking,
-                                    size: 30.0,
-                                    color: Colors.cyan,
-                                  ),
-                                  Text(
-                                    '$_stepCountValue',
-                                    style:
-                                    TextStyle(color: Colors.cyan, fontSize: 30.0),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        )),
+                        child: Container(
+                      width: MediaQuery.of(context).size.width / 1.8,
+                      height: MediaQuery.of(context).size.width / 1.8,
+                      child: LiquidCircularProgressIndicator(
+                        value: percentStepToTarget < 0.11 ? 0.1 : percentStepToTarget,
+                        // Defaults to 0.5.
+                        valueColor: AlwaysStoppedAnimation(
+                          Colors.purpleAccent,
+                        ),
+                        // Defaults to the current Theme's accentColor.
+                        backgroundColor: Colors.white,
+                        // Defaults to the current Theme's backgroundColor.
+                        borderColor: Colors.cyan,
+                        borderWidth: 5.0,
+                        direction: Axis.vertical,
+                        center: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: <Widget>[
+                            Column(
+                              children: <Widget>[
+                                Text(
+                                  "Hedef",
+                                  style: TextStyle(fontSize: 24.0),
+                                  textAlign: TextAlign.center,
+                                ),
+                                Text(
+                                  "$targetSteps",
+                                  style: TextStyle(fontSize: 22.0),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ],
+                            ),
+                            SizedBox(
+                              height: 20.0,
+                            ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: <Widget>[
+                                Icon(
+                                  FontAwesomeIcons.walking,
+                                  size: 30.0,
+                                  color: Colors.cyan,
+                                ),
+                                Text(
+                                  '$_stepCountValue',
+                                  style: TextStyle(
+                                      color: Colors.cyan, fontSize: 30.0),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    )),
                   ),
                   Padding(
                     padding: const EdgeInsets.only(bottom: 15.0),
@@ -311,7 +399,7 @@ class _MyHomePageState extends State<StepPage> {
                           child: CustomWidgetPair(
                               iconColor: Colors.yellow,
                               icon: FontAwesomeIcons.road,
-                              data: "$_km",
+                              data: "$_distance",
                               title: "Km",
                               sizeBoxHeight: 5.0),
                         ),
@@ -329,7 +417,7 @@ class _MyHomePageState extends State<StepPage> {
                           child: CustomWidgetPair(
                               iconColor: Colors.redAccent,
                               icon: FontAwesomeIcons.stopwatch,
-                              data: "0sa 0 dk 0sn",
+                              data: '$walkingTimeDuration',
                               title: "Yürüyüş Süresi",
                               sizeBoxHeight: 5.0),
                         )
@@ -339,7 +427,6 @@ class _MyHomePageState extends State<StepPage> {
                 ],
               ),
             ],
-
           ),
         ));
   }

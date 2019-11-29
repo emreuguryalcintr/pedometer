@@ -1,4 +1,9 @@
 
-String stepPrefName="STEP_PREF";
-String targetSteps="TARGET_STEPS_SHARED_PREF";
-String recordSteps="RECORD_STEPS_SHARED_PREF";
+class SharedPrefsConstant{
+  static String dailyStepPrefName="DAILY_STEP_PREF";
+  static String dailyTarget="DAILY_TARGET_SHARED_PREF";
+  static String dailySteps="DAILY_STEPS_SHARED_PREF";
+  static String dailyCalorie="DAILY_CALORIE_PREF";
+  static String dailyDistance="DAILY_DISTANCE_PREF";
+  static String dailyWalkingTime="DAILY_WALKING_TIME";
+}

@@ -1,16 +1,10 @@
-import 'dart:async';
-
 import 'package:denemee/pages/analysis/analysis_main_screen.dart';
 import 'package:denemee/pages/step_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:overlay_support/overlay_support.dart';
-import 'package:pedometer/pedometer.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:percent_indicator/circular_percent_indicator.dart';
-import 'dart:math';
-import 'setting_screen.dart';
+
 import 'exercise_screen.dart';
+import 'setting_screen.dart';
 void main() => runApp(MyApp());
 
 class MyApp extends StatelessWidget {
@@ -23,6 +17,7 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
       ),
       home:MyHomePage(),
+      debugShowCheckedModeBanner: false,
     );
   }
 }
@@ -40,10 +35,10 @@ class MyHomePage extends StatefulWidget{
 class _MyHomePageState extends State<MyHomePage> {
   int _selectedIndex = 0;
   static List<Widget> _widgetOptions = <Widget>[
-    StepPage(),
-    ExercisePage(),
-    AnalysisPage(),
-    SettingPage(),
+    StepPage(  key: PageStorageKey('StepPage'),),
+    ExercisePage(  key: PageStorageKey('ExercisePage'),),
+    AnalysisPage(  key: PageStorageKey('AnalysisPage'),),
+    SettingPage(  key: PageStorageKey('SettingPage'),),
   ];
 
   void _onItemTapped(int index) {
@@ -52,11 +47,14 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
+  final PageStorageBucket bucket = PageStorageBucket();
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(
+      body: PageStorage(
         child: _widgetOptions.elementAt(_selectedIndex),
+        bucket: bucket,
       ),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
@@ -65,7 +63,7 @@ class _MyHomePageState extends State<MyHomePage> {
         selectedItemColor: Colors.cyan,
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
-            icon: Icon(FontAwesomeIcons.running),
+            icon: Icon(Icons.wb_sunny),
             title: Text('Günlük'),
           ),
           BottomNavigationBarItem(

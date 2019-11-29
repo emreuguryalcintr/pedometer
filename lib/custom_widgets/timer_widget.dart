@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:numberpicker/numberpicker.dart';
@@ -29,8 +27,8 @@ class TimerWidget extends StatefulWidget {
 
 class _TimerWidgetState extends State<TimerWidget> {
    int hour=0;
-   int minute=0;
-   int second=0;
+   int minute=05;
+   int second=00;
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -73,8 +71,8 @@ class _TimerWidgetState extends State<TimerWidget> {
                     ),
                     NumberPicker.integer(
                         initialValue:minute,
-                        minValue: 0,
-                        maxValue: 24,
+                        minValue: 05,
+                        maxValue: 59,
                         listViewWidth: 50.0,
                         onChanged: (val){
                           setState(() {
@@ -85,27 +83,6 @@ class _TimerWidgetState extends State<TimerWidget> {
 
                   ],
                 ),
-                Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                    Padding(
-                      padding: EdgeInsets.only(bottom: 10.0),
-                      child: Text("SS"),
-                    ),
-                    NumberPicker.integer(
-                        initialValue:second,
-                        minValue: 0,
-                        maxValue: 24,
-                        listViewWidth: 50.0,
-                        onChanged: (val){
-                          setState(() {
-                            second=val;
-                          });
-                        }
-                    )
-
-                  ],
-                )
               ],
             ),
           )

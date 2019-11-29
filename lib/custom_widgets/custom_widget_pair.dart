@@ -1,7 +1,4 @@
 import 'package:flutter/cupertino.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-
-
 
 class CustomWidgetPair extends StatelessWidget {
   final Color iconColor;
@@ -10,22 +7,49 @@ class CustomWidgetPair extends StatelessWidget {
   final String title;
   final double sizeBoxHeight;
   final TextStyle textStyle;
+  final double iconSize;
 
-  CustomWidgetPair({this.iconColor,this.icon, this.data, this.title, this.sizeBoxHeight, this.textStyle});
+  CustomWidgetPair(
+      {this.iconColor,
+      this.icon,
+      this.data,
+      this.title,
+      this.sizeBoxHeight,
+      this.textStyle,
+      this.iconSize});
 
+  bool notNull(Object o) => o != null;
 
   @override
   Widget build(BuildContext context) {
-    return  Column(
+    return Column(
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
-        Icon(icon,
-          color: iconColor,),
-        SizedBox(height: 5.0,),
-        Text(data,style: textStyle!=null?textStyle:null,),
-        SizedBox(height: 5.0,),
-        if(title!=null) Text(title,style: textStyle!=null?textStyle:null,)
-      ],
+        iconSize == null
+            ? Icon(icon, color: iconColor)
+            : Icon(
+                icon,
+                color: iconColor,
+                size: iconSize,
+              ),
+        SizedBox(
+          height: 5.0,
+        ),
+        Text(
+          data,
+          style: textStyle != null ? textStyle : null,
+          textAlign: TextAlign.center,
+        ),
+        SizedBox(
+          height: 5.0,
+        ),
+        title != null
+            ? Text(
+                title,
+                style: textStyle != null ? textStyle : null,
+              )
+            : null
+      ].where(notNull).toList(),
     );
   }
 }

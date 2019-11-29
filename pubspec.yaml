@@ -14,10 +14,10 @@ description: A new Flutter application.
 version: 1.0.0+1
 
 environment:
-  sdk: ">=2.1.0 <3.0.0"
+  sdk: ">=2.2.0 <3.0.0"
 
 dependencies:
-  cloud_firestore:
+  cloud_firestore: ^0.12.10+2
   flutter:
     sdk: flutter
 
@@ -34,6 +34,11 @@ dependencies:
   overlay_support: 1.0.2
   fab_menu: 0.0.2
   numberpicker: ^1.1.0
+  shared_preferences: ^0.5.4+6
+  sticky_headers: ^0.1.8
+  grouped_list: ^1.2.1
+  flutter_duration_picker: ^1.0.4
+  liquid_progress_indicator: ^0.3.2
 
 dev_dependencies:
   flutter_test:
