@@ -65,9 +65,18 @@ class _ExercisePageState extends State<ExercisePage> with TickerProviderStateMix
   Firestore _firestore;
   bool isStopwatchBegunFirstly = false;
 
+
+  AnimationController _animationController;
+
   @override
   initState() {
 
+    _animationController = AnimationController(
+      vsync: this,
+      duration: Duration(seconds: 2),
+    );
+
+    _animationController.repeat();
 
     _firestore = Firestore.instance;
 
@@ -160,8 +169,10 @@ class _ExercisePageState extends State<ExercisePage> with TickerProviderStateMix
         print("play working stopwatch is running");
         // cancelListening();
         sensorIsWorking = false;
+        _animationController.reset();
         //pauseListening();
       } else {
+        _animationController.repeat();
         sensorIsWorking = true;
         if (_streamSubscription.isPaused) {
           resumeListening();
@@ -275,6 +286,7 @@ class _ExercisePageState extends State<ExercisePage> with TickerProviderStateMix
                         height: MediaQuery.of(context).size.width / 1.8,
                         child: LiquidCircularProgressIndicator(
                           value:0.15,
+                          animationController: _animationController,
                           // Defaults to 0.5.
                           valueColor: AlwaysStoppedAnimation(
                             Colors.deepPurple,

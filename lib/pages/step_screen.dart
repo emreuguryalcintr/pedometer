@@ -19,7 +19,7 @@ class StepPage extends StatefulWidget {
   _MyHomePageState createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<StepPage> {
+class _MyHomePageState extends State<StepPage> with SingleTickerProviderStateMixin{
   String buttonName;
 
   bool _isPlayWorking = true;
@@ -51,6 +51,8 @@ class _MyHomePageState extends State<StepPage> {
 
   var walkingTimeDuration = "00:00:00";
 
+  AnimationController _animationController;
+
   @override
   void initState() {
     super.initState();
@@ -67,6 +69,13 @@ class _MyHomePageState extends State<StepPage> {
     loadDailySteps();
 
     startTimer();
+
+    _animationController = AnimationController(
+      vsync: this,
+      duration: Duration(seconds: 2),
+    );
+
+    _animationController.repeat();
   }
 
   @override
@@ -120,8 +129,10 @@ class _MyHomePageState extends State<StepPage> {
   void pauseAndPlayButtonPressed() {
     setState(() {
       if (stopwatch.isRunning) {
+        _animationController.reset();
         stopwatch.stop();
       } else {
+        _animationController.repeat();
         stopwatch.start();
         startTimer();
       }
@@ -339,6 +350,7 @@ class _MyHomePageState extends State<StepPage> {
                       height: MediaQuery.of(context).size.width / 1.8,
                       child: LiquidCircularProgressIndicator(
                         value: percentStepToTarget < 0.11 ? 0.1 : percentStepToTarget,
+                        animationController: _animationController,
                         // Defaults to 0.5.
                         valueColor: AlwaysStoppedAnimation(
                           Colors.purpleAccent,
