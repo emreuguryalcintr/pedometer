@@ -1,3 +1,6 @@
+import 'package:denemee/localization/localization_constants.dart';
+import 'package:denemee/custom_libraries/easy_localization/custom_app_localizations.dart';
+import 'package:denemee/localization/localization_initial_constants.dart';
 import 'package:denemee/pages/analysis/analysis_daily_screen.dart';
 import 'package:denemee/pages/analysis/analysis_exercises_screen.dart';
 import 'package:flutter/cupertino.dart';
@@ -45,6 +48,10 @@ class _AnalysisPageState extends State<AnalysisPage>
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      localizationsDelegates:localizationDelegates(),
+      supportedLocales:supportedLanguages(),
+      localeResolutionCallback: localeResolutionCallback(),
       home: Scaffold(
         appBar: PreferredSize(
           preferredSize: Size.fromHeight(80),
@@ -58,13 +65,13 @@ class _AnalysisPageState extends State<AnalysisPage>
                       FontAwesomeIcons.list,
                       color: _tabController.index==0?Colors.redAccent:Colors.white,
                     ),
-                    text: "Egzersiz"),
+                    text: AppLocalizations.of(context).translate(LocalizationConstants.exercise)),
                 new Tab(
                   icon: new Icon(
                     FontAwesomeIcons.chartLine,
                     color: _tabController.index==1?Colors.redAccent:Colors.white,
                   ),
-                  text: "Günlük",
+                  text: AppLocalizations.of(context).translate(LocalizationConstants.for_today),
                 ),
               ],
               onTap: _onItemTapped,
@@ -83,7 +90,7 @@ class _AnalysisPageState extends State<AnalysisPage>
         body: TabBarView(
           physics: NeverScrollableScrollPhysics(),
           controller: _tabController,
-          children: <Widget>[AnalysisListPage(), AnalysisGraphicallyPage()],
+          children: <Widget>[AnalysisListPage(), AnalysisDailyPage()],
         ),
       ),
     );

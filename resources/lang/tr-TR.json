@@ -1,0 +1,51 @@
+{
+  "daily": "Günlük",
+  "exercise": "Egzersiz",
+  "analyse": "Analiz",
+  "settings": "Ayarlar",
+
+  "time_constants": {
+    "hour": "Saat",
+    "minute": "Dakika",
+    "seconds": "Saniye",
+    "hour_symbol": "HH",
+    "minute_symbol": "MM",
+    "minute_short":"dk",
+    "hour_short": "s",
+    "second_symbol": "SS"
+  },
+
+  "exercise_type": "Egzersiz Türü",
+  "finite_exercise": "Süreli Egzersiz",
+  "infinite_exercise": "Süresiz Egzersiz",
+  "finite": "Süreli",
+  "infinite": "Süresiz",
+  "start": "Başlat",
+  "cancel": "İptal",
+  "completed": "Tamamlandı",
+  "uncompleted":"Tamamlanmadı",
+  "today": "Bugün",
+  "for_today": "Bugünlük",
+  "tomorrow": "Yarın",
+  "this_week": "Bu Hafta",
+  "this_month": "Bu Ay",
+  "please_wait": "Lütfen bekleyiniz...",
+  "completion status": "Tamamlanma Durumu",
+  "distance": "Mesafe",
+  "walking_time": "Yürüyüş Süresi",
+  "stop": "Bitir",
+  "pause": "Durdur",
+  "invalid_value": "Geçersiz Değer",
+  "valid_value": "Geçerli Değer",
+  "failed_registration": "Kayıt Yapılamadı",
+  "start_exercise": "Egzersiz Başlat",
+  "target": "Hedef",
+
+
+
+  "languages": {
+    "turkish": "Türkçe",
+    "english": "İngilizce"
+  }
+
+}

@@ -1,6 +1,7 @@
 class FireBaseConstants{
   static String dbName_daily="daily_db";
   static String dbName_exercise="exercise_db";
+  static String dbName_pedometer="pedometer";
   static String stepCount_constant="step_count";
   static String startTime_constant="start_time";
   static String endTime_constant="end_time";

@@ -1,33 +1,35 @@
 import 'dart:async';
 import 'dart:math';
-
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:denemee/constants/firebase_constants.dart';
+import 'package:denemee/constants/general_constants.dart';
+import 'package:denemee/localization/localization_constants.dart';
+import 'package:denemee/custom_libraries/easy_localization/custom_app_localizations.dart';
+import 'package:denemee/custom_libraries/liquid_circular_progress_indicator/liquid_circular_lcpi.dart';
 import 'package:denemee/custom_widgets/custom_widget_pair.dart';
 import 'package:denemee/custom_widgets/exercise_timer_button.dart';
 import 'package:denemee/custom_widgets/start_button.dart';
 import 'package:denemee/custom_widgets/timer_widget.dart';
 import 'package:denemee/dialog/exercise_time_alert.dart';
+import 'package:denemee/localization/localization_initial_constants.dart';
 import 'package:denemee/models/daily_model.dart';
 import 'package:denemee/models/exercise_model.dart';
 import 'package:denemee/utils/time_utils.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:liquid_progress_indicator/liquid_progress_indicator.dart';
 import 'package:pedometer/pedometer.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ExercisePage extends StatefulWidget {
-
-  const ExercisePage({Key key}):super(key:key);
+  const ExercisePage({Key key}) : super(key: key);
 
   @override
   _ExercisePageState createState() => _ExercisePageState();
 }
 
-class _ExercisePageState extends State<ExercisePage> with TickerProviderStateMixin {
-  String chronometerTime = "00:00:00";
-  bool isFirstTime = true;
+class _ExercisePageState extends State<ExercisePage>
+    with TickerProviderStateMixin {
+
   int initialSteps = 0;
 
   double _convert;
@@ -46,38 +48,33 @@ class _ExercisePageState extends State<ExercisePage> with TickerProviderStateMix
   int totalSavedCount = 0;
   bool sensorIsWorking = true;
 
-  int timeForTimer=3600;
+  int timeForTimer = 0;
   Timer timer;
 
   String selectedWidgetName = "_widgetButton";
   static const String widgetButton = "_widgetButton";
   static const String widgetExercise = "_widgetExercise";
   static const String widgetDialog = "_widgetDialog";
+  String chronometerTime = "00:00:00";
+  bool isFirstTime = true;
 
   Pedometer pedometer;
   StreamSubscription<int> _streamSubscription;
 
-  final duration = const Duration(seconds: 1);
+  final duration = const Duration(seconds: -1);
+  Duration timerDuration = Duration(seconds: 0, minutes: 5);
   var stopwatch = Stopwatch();
   String stopTimeToDisplay = "00:00:00";
   bool stopwatchIsRunning = false;
 
   Firestore _firestore;
   bool isStopwatchBegunFirstly = false;
-
+  String _exerciseType;
 
   AnimationController _animationController;
 
   @override
   initState() {
-
-    _animationController = AnimationController(
-      vsync: this,
-      duration: Duration(seconds: 2),
-    );
-
-    _animationController.repeat();
-
     _firestore = Firestore.instance;
 
     pedometer = new Pedometer();
@@ -86,15 +83,22 @@ class _ExercisePageState extends State<ExercisePage> with TickerProviderStateMix
       _streamSubscription = pedometer.pedometerStream
           .listen(onData, onError: _onError, onDone: _onDone);
     }
+
+    _animationController = AnimationController(
+      vsync: this,
+      duration: Duration(seconds: 2),
+    );
+
+    _animationController.repeat();
     super.initState();
   }
 
   @override
   void dispose() {
     // TODO: implement dispose
+    _animationController.dispose();
 
-
-    if(timer!=null){
+    if (timer != null) {
       timer.cancel();
     }
     super.dispose();
@@ -165,23 +169,52 @@ class _ExercisePageState extends State<ExercisePage> with TickerProviderStateMix
     setState(() {
       //_isPlayWorking=_isPlayWorking?false:true;
 
-      if (!stopwatch.isRunning) {
-        print("play working stopwatch is running");
-        // cancelListening();
-        sensorIsWorking = false;
-        _animationController.reset();
-        //pauseListening();
-      } else {
-        _animationController.repeat();
-        sensorIsWorking = true;
-        if (_streamSubscription.isPaused) {
-          resumeListening();
+      if(_exerciseType==GeneralConstants.EXERCISE_TYPE_INFINITE){
+        if (!stopwatch.isRunning) {
+          print("play working stopwatch is running");
+          // cancelListening();
+          _animationController.repeat();
+          sensorIsWorking = false;
+          //pauseListening();
         } else {
-          // startListening();
+          _animationController.reset();
+          sensorIsWorking = true;
+
+          if (_streamSubscription.isPaused) {
+            resumeListening();
+          } else {
+            // startListening();
+          }
         }
+      }else{
+        startTimer();
       }
+
     });
   }
+
+  void pauseAndPlayButtonPressed() {
+    setState(() {
+      if(_exerciseType==GeneralConstants.EXERCISE_TYPE_INFINITE){
+        if (stopwatch.isRunning) {
+          stopwatch.stop();
+        } else {
+          if (!isStopwatchBegunFirstly) {
+            _startTime = Timestamp.fromMillisecondsSinceEpoch(
+                new DateTime.now().millisecondsSinceEpoch);
+            isStopwatchBegunFirstly = true;
+          }
+          stopwatch.start();
+          startStopwatch();
+        }
+      }else{
+        if(timer.isActive){
+        }
+      }
+
+    });
+  }
+
 
   void pauseListening() {
     _streamSubscription.pause();
@@ -199,16 +232,15 @@ class _ExercisePageState extends State<ExercisePage> with TickerProviderStateMix
     Timer(duration, keepRunningStopwatch);
   }
 
-  void startTimer(){
-
-   timer= Timer.periodic(duration,(Timer timer){
-      setState((){
-        if(timeForTimer<1){
+  void startTimer() {
+    timer = Timer.periodic(duration, (Timer timer) {
+      setState(() {
+        if (timeForTimer < 1) {
           timer.cancel();
-        }else{
-          timeForTimer-=1;
+        } else {
+          timeForTimer -= 1;
         }
-        stopTimeToDisplay=convertWalkingTime(timeForTimer);
+        stopTimeToDisplay = convertWalkingTime(timeForTimer);
       });
     });
   }
@@ -231,43 +263,27 @@ class _ExercisePageState extends State<ExercisePage> with TickerProviderStateMix
     });
   }
 
-  void pauseAndPlayButtonPressed() {
-    setState(() {
-      if (stopwatch.isRunning) {
-        stopwatch.stop();
-      } else {
-        if (!isStopwatchBegunFirstly) {
-          _startTime = Timestamp.fromMillisecondsSinceEpoch(
-              new DateTime.now().millisecondsSinceEpoch);
-          isStopwatchBegunFirstly = true;
-        }
-        stopwatch.start();
-        startStopwatch();
-      }
-    });
-  }
+
 
   @override
   Widget build(BuildContext context) {
     // TODO: implement build
-    return new Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.deepPurpleAccent,
-        leading: new IconButton(
-          icon: new Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () {
-            Navigator.of(context).pop();
-          },
+    return   Scaffold(
+        backgroundColor: Colors.white,
+        appBar: AppBar(
+          backgroundColor: Colors.deepPurpleAccent,
+          leading: new IconButton(
+            icon: new Icon(Icons.arrow_back, color: Colors.white),
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+          ),
+          title: Text(AppLocalizations.of(context).translate(LocalizationConstants.exercise)),
+          centerTitle: true,
         ),
-        title: Text("Egzersiz"),
-        centerTitle: true,
-      ),
-      body: _selectedWidget(),
-    );
+        body: _selectedWidget(),
+      );
   }
-
-
 
   Widget _widgetExercise() {
     return SafeArea(
@@ -284,9 +300,9 @@ class _ExercisePageState extends State<ExercisePage> with TickerProviderStateMix
                       Container(
                         width: MediaQuery.of(context).size.width / 1.8,
                         height: MediaQuery.of(context).size.width / 1.8,
-                        child: LiquidCircularProgressIndicator(
-                          value:0.15,
+                        child: LiquidCircularProgressIndicatorCustomLCPI(
                           animationController: _animationController,
+                          value: 0.15,
                           // Defaults to 0.5.
                           valueColor: AlwaysStoppedAnimation(
                             Colors.deepPurple,
@@ -297,7 +313,7 @@ class _ExercisePageState extends State<ExercisePage> with TickerProviderStateMix
                           borderColor: Colors.cyan,
                           borderWidth: 5.0,
                           direction: Axis.vertical,
-                          center:    Column(
+                          center: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: <Widget>[
                               Icon(
@@ -341,17 +357,17 @@ class _ExercisePageState extends State<ExercisePage> with TickerProviderStateMix
                               iconSecondary: Icons.play_arrow,
                               isWorking: stopwatch.isRunning,
                               buttonText:
-                                  stopwatch.isRunning ? "Durdur" : "Başlat",
+                                  stopwatch.isRunning ? AppLocalizations.of(context).translate(LocalizationConstants.pause) : AppLocalizations.of(context).translate(LocalizationConstants.start),
                               colorBackground: Colors.deepPurpleAccent,
                               colorItems: Colors.white,
                               onPressed: () {
-                               // pauseAndPlayButtonPressed();
+                                pauseAndPlayButtonPressed();
                                 playWorking();
                               },
                             ),
                             ExerciseTimerButton(
                               icon: Icons.stop,
-                              buttonText: "Bitir",
+                              buttonText: AppLocalizations.of(context).translate(LocalizationConstants.stop),
                               colorBackground: Colors.deepPurpleAccent,
                               colorItems: Colors.white,
                               onPressed: () {
@@ -450,7 +466,7 @@ class _ExercisePageState extends State<ExercisePage> with TickerProviderStateMix
     switch (selectedWidgetName) {
       case widgetButton:
         selectedWidget = WidgetStartExerciseButton(
-          text: "Egzersiz Başlat",
+          text: AppLocalizations.of(context).translate(LocalizationConstants.start_exercise),
           onPressed: () {
             setState(() {
               selectedWidgetName = widgetDialog;
@@ -460,21 +476,28 @@ class _ExercisePageState extends State<ExercisePage> with TickerProviderStateMix
         break;
       case widgetDialog:
         selectedWidget = ExerciseTimeAlert(
-          duration: Duration(hours: 0,minutes: 5),
-          onPressedStart:  ()  {
+          shortMin: AppLocalizations.of(context).translateGroupChild(parentKey: LocalizationConstants.time_constants,childKey:LocalizationConstants.minute_short),
+          shortHour: AppLocalizations.of(context).translateGroupChild(parentKey: LocalizationConstants.time_constants,childKey:LocalizationConstants.hour_short),
+          startText:AppLocalizations.of(context).translate(LocalizationConstants.start),
+          cancelText:AppLocalizations.of(context).translate(LocalizationConstants.cancel),
+          finiteExerciseText:AppLocalizations.of(context).translate(LocalizationConstants.finite_exercise),
+          infiniteExerciseText:AppLocalizations.of(context).translate(LocalizationConstants.infinite_exercise),
+          durationData: durationFromAlert,
+          duration: timerDuration,
+          onPressedStart: () {
             setState(() {
-              selectedWidgetName=widgetExercise;
-              //pauseAndPlayButtonPressed();
-              startTimer();
-              print('widget key: ${selectedWidget.toString()}');
+              selectedWidgetName = widgetExercise;
+              pauseAndPlayButtonPressed();
+              //startTimer();
+              print('widget duration: ${timeForTimer.toString()}');
             });
           },
-
-          onPressedCancel:() {
+          onPressedCancel: () {
             setState(() {
-              selectedWidgetName=widgetButton;
+              selectedWidgetName = widgetButton;
             });
           },
+          exerciseType: exerciseTypeFromWidget
         );
         break;
       case widgetExercise:
@@ -483,5 +506,17 @@ class _ExercisePageState extends State<ExercisePage> with TickerProviderStateMix
     }
 
     return selectedWidget;
+  }
+
+  void durationFromAlert(dynamic childValue) {
+    setState(() {
+      timeForTimer = childValue;
+    });
+  }
+
+  void exerciseTypeFromWidget(String exerciseType){
+    setState(() {
+      _exerciseType=exerciseType;
+    });
   }
 }

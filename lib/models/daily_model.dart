@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:denemee/constants/firebase_constants.dart';
+import 'package:denemee/utils/time_utils.dart';
 import 'package:flutter/cupertino.dart';
 
 class DailyModel {
@@ -39,5 +40,47 @@ class DailyModel {
     this.distance=json[FireBaseConstants.distance_constant];
     this.walkingTime=json[FireBaseConstants.walkingTime_constant];
   }
+
+  static Map dailyListByDay(List<DailyModel> listFromFireStore){
+    print("dailyListByDay size: ${listFromFireStore.length}");
+
+    /**
+     * burada ilk string değeri bugün bu hafta ya da bu ay olup olmadığını belirleyecek
+     *  Map<String,Map> mapToHeader=Map();
+     */
+
+
+    Map<String,List<DailyModel>> mapByDay=Map();
+    String dateInString="";
+    List<DailyModel> list=new List();
+
+    for(int i=0;i<listFromFireStore.length;i++){
+      dateInString=convertDateFromTimeStamps(listFromFireStore[i].startTime);
+      print("dailyListByDay date : $dateInString");
+      if(i==0){
+        list.add(listFromFireStore[0]);
+        mapByDay[dateInString]=list;
+
+      }else{
+          if(mapByDay.containsKey(dateInString)){
+            list.add(listFromFireStore[i]);
+            mapByDay[dateInString]=list;
+          }else{
+            list=List();
+            list.add(listFromFireStore[i]);
+            mapByDay[dateInString]=list;
+          }
+
+      }
+    }
+
+    return mapByDay;
+  }
+
+  @override
+  String toString() {
+    return 'DailyModel{ stepCount: $stepCount, calories: $calories, distance: $distance, walkingTime: $walkingTime}';
+  }
+
 
 }

@@ -1,4 +1,3 @@
-
 import 'dart:async';
 import 'dart:math' as math;
 
@@ -27,6 +26,8 @@ const double _kCircleLeft = math.pi;
 class _DialPainter extends CustomPainter {
   const _DialPainter({
     @required this.context,
+    @required this.shortMin,
+    @required this.shortHour,
     @required this.labels,
     @required this.backgroundColor,
     @required this.accentColor,
@@ -47,6 +48,8 @@ class _DialPainter extends CustomPainter {
 
   final double pct;
   final int multiplier;
+  final String shortMin;
+  final String shortHour;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -86,7 +89,7 @@ class _DialPainter extends CustomPainter {
     canvas.drawCircle(handlePoint, 20.0, handlePaint);
 
     // Draw the Text in the center of the circle which displays hours and mins
-    String hours = (multiplier == 0) ? '' : "${multiplier}h ";
+    String hours = (multiplier == 0) ? '' : "${multiplier}$shortHour ";
     int minutes = (pctTheta * 60).round();
     minutes = minutes == 60 ? 0 : minutes;
     TextPainter textDurationValuePainter = new TextPainter(
@@ -107,7 +110,7 @@ class _DialPainter extends CustomPainter {
     TextPainter textMinPainter = new TextPainter(
         textAlign: TextAlign.center,
         text: new TextSpan(
-            text: 'min.', //th: ${theta}',
+            text: shortMin, //th: ${theta}',
             style: Theme.of(context).textTheme.body1),
         textDirection: TextDirection.ltr)
       ..layout();
@@ -146,7 +149,7 @@ class _DialPainter extends CustomPainter {
 
       for (TextPainter label in labels) {
         final Offset labelOffset =
-        new Offset(-label.width / 2.0, -label.height / 2.0);
+            new Offset(-label.width / 2.0, -label.height / 2.0);
 
         label.paint(
             canvas, getOffsetForTheta(labelTheta, radius - 40.0) + labelOffset);
@@ -170,15 +173,21 @@ class _DialPainter extends CustomPainter {
 class _Dial extends StatefulWidget {
   const _Dial(
       {@required this.duration,
-        @required this.onChanged,
-        this.snapToMins = 1.0})
+      @required this.onChanged,
+        @required this.shortHour,
+        @required this.shortMin,
+      this.snapToMins = 1.0})
       : assert(duration != null);
 
   final Duration duration;
   final ValueChanged<Duration> onChanged;
 
+  final String shortMin;
+  final String shortHour;
+
   /// The resolution of mins of the dial, i.e. if snapToMins = 5.0, only durations of 5min intervals will be selectable.
   final double snapToMins;
+
   @override
   _DialState createState() => new _DialState();
 }
@@ -192,7 +201,7 @@ class _DialState extends State<_Dial> with SingleTickerProviderStateMixin {
       vsync: this,
     );
     _thetaTween =
-    new Tween<double>(begin: _getThetaForDuration(widget.duration));
+        new Tween<double>(begin: _getThetaForDuration(widget.duration));
     _theta = _thetaTween.animate(new CurvedAnimation(
         parent: _thetaController, curve: Curves.fastOutSlowIn))
       ..addListener(() => setState(() {}));
@@ -240,7 +249,7 @@ class _DialState extends State<_Dial> with SingleTickerProviderStateMixin {
   void _animateTo(double targetTheta) {
     final double currentTheta = _theta.value;
     double beginTheta =
-    _nearest(targetTheta, currentTheta, currentTheta + _kTwoPi);
+        _nearest(targetTheta, currentTheta, currentTheta + _kTwoPi);
     beginTheta = _nearest(targetTheta, beginTheta, currentTheta - _kTwoPi);
     _thetaTween
       ..begin = beginTheta
@@ -418,6 +427,8 @@ class _DialState extends State<_Dial> with SingleTickerProviderStateMixin {
         onTapUp: _handleTapUp,
         child: new CustomPaint(
           painter: new _DialPainter(
+            shortMin:widget.shortMin,
+            shortHour: widget.shortHour,
             pct: _pct,
             multiplier: _hours,
             context: context,
@@ -443,13 +454,15 @@ class _DurationPickerDialog extends StatefulWidget {
   ///
   /// [initialTime] must not be null.
   const _DurationPickerDialog(
-      {Key key, @required this.initialTime, this.snapToMins})
+      {Key key, @required this.initialTime, this.snapToMins, @required this.shortMin, this.shortHour})
       : assert(initialTime != null),
         super(key: key);
 
   /// The duration initially selected when the dialog is shown.
   final Duration initialTime;
   final double snapToMins;
+  final String shortMin;
+  final String shortHour;
 
   @override
   _DurationPickerDialogState createState() => new _DurationPickerDialogState();
@@ -497,6 +510,8 @@ class _DurationPickerDialogState extends State<_DurationPickerDialog> {
         child: new AspectRatio(
             aspectRatio: 1.0,
             child: new _Dial(
+              shortHour: widget.shortHour,
+              shortMin: widget.shortMin,
               duration: _selectedDuration,
               onChanged: _handleTimeChanged,
               snapToMins: widget.snapToMins,
@@ -504,57 +519,56 @@ class _DurationPickerDialogState extends State<_DurationPickerDialog> {
 
     final Widget actions = new ButtonTheme.bar(
         child: new ButtonBar(children: <Widget>[
-          new FlatButton(
-              child: new Text(localizations.cancelButtonLabel),
-              onPressed: _handleCancel),
-          new FlatButton(
-              child: new Text(localizations.okButtonLabel), onPressed: _handleOk),
-        ]));
+      new FlatButton(
+          child: new Text(localizations.cancelButtonLabel),
+          onPressed: _handleCancel),
+      new FlatButton(
+          child: new Text(localizations.okButtonLabel), onPressed: _handleOk),
+    ]));
 
     final Dialog dialog = new Dialog(child: new OrientationBuilder(
         builder: (BuildContext context, Orientation orientation) {
-          final Widget pickerAndActions = new Container(
-            color: theme.dialogBackgroundColor,
-            child: new Column(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                new Expanded(
-                    child:
-                    picker), // picker grows and shrinks with the available space
-                actions,
-              ],
-            ),
-          );
+      final Widget pickerAndActions = new Container(
+        color: theme.dialogBackgroundColor,
+        child: new Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            new Expanded(child: picker),
+            // picker grows and shrinks with the available space
+            actions,
+          ],
+        ),
+      );
 
-          assert(orientation != null);
-          switch (orientation) {
-            case Orientation.portrait:
-              return new SizedBox(
-                  width: _kDurationPickerWidthPortrait,
-                  height: _kDurationPickerHeightPortrait,
-                  child: new Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: <Widget>[
-                        new Expanded(
-                          child: pickerAndActions,
-                        ),
-                      ]));
-            case Orientation.landscape:
-              return new SizedBox(
-                  width: _kDurationPickerWidthLandscape,
-                  height: _kDurationPickerHeightLandscape,
-                  child: new Row(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: <Widget>[
-                        new Flexible(
-                          child: pickerAndActions,
-                        ),
-                      ]));
-          }
-          return null;
-        }));
+      assert(orientation != null);
+      switch (orientation) {
+        case Orientation.portrait:
+          return new SizedBox(
+              width: _kDurationPickerWidthPortrait,
+              height: _kDurationPickerHeightPortrait,
+              child: new Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: <Widget>[
+                    new Expanded(
+                      child: pickerAndActions,
+                    ),
+                  ]));
+        case Orientation.landscape:
+          return new SizedBox(
+              width: _kDurationPickerWidthLandscape,
+              height: _kDurationPickerHeightLandscape,
+              child: new Row(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: <Widget>[
+                    new Flexible(
+                      child: pickerAndActions,
+                    ),
+                  ]));
+      }
+      return null;
+    }));
 
     return new Theme(
       data: theme.copyWith(
@@ -585,15 +599,19 @@ class _DurationPickerDialogState extends State<_DurationPickerDialog> {
 /// ```
 Future<Duration> showDurationPicker(
     {@required BuildContext context,
-      @required Duration initialTime,
-      double snapToMins}) async {
+    @required Duration initialTime,
+    double snapToMins,
+    @required String shortMin,
+    @required String shortHour}) async {
   assert(context != null);
   assert(initialTime != null);
 
   return await showDialog<Duration>(
     context: context,
-    builder: (BuildContext context) =>
-    new _DurationPickerDialog(initialTime: initialTime, snapToMins: snapToMins),
+    builder: (BuildContext context) => new _DurationPickerDialog(
+      shortMin:shortMin,
+        shortHour: shortHour,
+        initialTime: initialTime, snapToMins: snapToMins),
   );
 }
 
@@ -601,6 +619,8 @@ class DurationPicker extends StatelessWidget {
   final Duration duration;
   final ValueChanged<Duration> onChange;
   final double snapToMins;
+  final String shortMin;
+  final String shortHour;
 
   final double width;
   final double height;
@@ -608,10 +628,12 @@ class DurationPicker extends StatelessWidget {
 
   DurationPicker(
       {this.duration = const Duration(minutes: 0),
-        @required this.onChange,
-        this.snapToMins,
-        this.width,
-        this.height,
+      @required this.onChange,
+        @required this.shortHour,
+        @required this.shortMin,
+      this.snapToMins,
+      this.width,
+      this.height,
       @required this.colorAccent});
 
   @override
@@ -625,6 +647,8 @@ class DurationPicker extends StatelessWidget {
             children: <Widget>[
               Expanded(
                 child: _Dial(
+                  shortHour:shortHour,
+                  shortMin: shortMin,
                   duration: duration,
                   onChanged: onChange,
                   snapToMins: snapToMins,

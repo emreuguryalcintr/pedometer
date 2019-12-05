@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CLIENT_ID</key>
+	<string>952522435986-hs9lnovm9okiuoljh26k1pd60jenb44e.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.952522435986-hs9lnovm9okiuoljh26k1pd60jenb44e</string>
+	<key>ANDROID_CLIENT_ID</key>
+	<string>952522435986-bh6le50vhig6b3eps0n2klofihomcps8.apps.googleusercontent.com</string>
+	<key>API_KEY</key>
+	<string>AIzaSyC11Chypft5GbGR2N7ADd2UuIMvT8eFDbA</string>
+	<key>GCM_SENDER_ID</key>
+	<string>952522435986</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.example.denemee</string>
+	<key>PROJECT_ID</key>
+	<string>netcad-mobile</string>
+	<key>STORAGE_BUCKET</key>
+	<string>netcad-mobile.appspot.com</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:952522435986:ios:df29afe8bd6e226d24a54b</string>
+	<key>DATABASE_URL</key>
+	<string>https://netcad-mobile.firebaseio.com</string>
+</dict>
+</plist>

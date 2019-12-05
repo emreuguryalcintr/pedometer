@@ -6,4 +6,6 @@ class SharedPrefsConstant{
   static String dailyCalorie="DAILY_CALORIE_PREF";
   static String dailyDistance="DAILY_DISTANCE_PREF";
   static String dailyWalkingTime="DAILY_WALKING_TIME";
+  static String languageCode="language_code";
+  static String countryCode="countryCode";
 }

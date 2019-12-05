@@ -1,16 +1,22 @@
 import 'dart:async';
-import 'dart:math';
-
+import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:denemee/constants/firebase_constants.dart';
+import 'package:denemee/localization/localization_constants.dart';
+import 'package:denemee/custom_libraries/easy_localization/custom_app_localizations.dart';
+import 'package:denemee/custom_libraries/liquid_circular_progress_indicator/liquid_circular_lcpi.dart';
 import 'package:denemee/custom_widgets/custom_widget_pair.dart';
+import 'package:denemee/localization/localization_initial_constants.dart';
 import 'package:denemee/models/daily_model.dart';
+import 'package:denemee/utils/shared_pref_utils.dart';
 import 'package:denemee/utils/time_utils.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:liquid_progress_indicator/liquid_progress_indicator.dart';
+import 'package:flutter/services.dart';
 import 'package:pedometer/pedometer.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'dart:math';
+
 
 class StepPage extends StatefulWidget {
   const StepPage({Key key}) : super(key: key);
@@ -19,7 +25,7 @@ class StepPage extends StatefulWidget {
   _MyHomePageState createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<StepPage> with SingleTickerProviderStateMixin{
+class _MyHomePageState extends State<StepPage>  with SingleTickerProviderStateMixin{
   String buttonName;
 
   bool _isPlayWorking = true;
@@ -48,10 +54,10 @@ class _MyHomePageState extends State<StepPage> with SingleTickerProviderStateMix
   Stopwatch stopwatch = Stopwatch();
 
   final duration = const Duration(seconds: 1);
-
   var walkingTimeDuration = "00:00:00";
 
   AnimationController _animationController;
+
 
   @override
   void initState() {
@@ -61,6 +67,12 @@ class _MyHomePageState extends State<StepPage> with SingleTickerProviderStateMix
     startTime = Timestamp.fromMillisecondsSinceEpoch(
         new DateTime.now().millisecondsSinceEpoch);
 
+    _animationController = AnimationController(
+      vsync: this,
+      duration: Duration(seconds: 2),
+    );
+
+    _animationController.repeat();
     // if the stream had no results, this will be null
     // if the stream has one or more results, this will be the last result
 
@@ -70,18 +82,20 @@ class _MyHomePageState extends State<StepPage> with SingleTickerProviderStateMix
 
     startTimer();
 
-    _animationController = AnimationController(
-      vsync: this,
-      duration: Duration(seconds: 2),
-    );
+    getDeviceId();
+   // startServiceForPlatformAndroid();
 
-    _animationController.repeat();
+  }
+  Future getDeviceId() async{
+    String device_id=  await SharedPrefUtils.getPrefValue("device_id");
+    print("device id is : $device_id");
   }
 
   @override
   void dispose() {
 
-    stopwatch.stop();
+    //ya da stop
+    stopwatch.reset();
 
     if (totalSavedCount > 1) {
       endTime = Timestamp.fromMillisecondsSinceEpoch(
@@ -129,10 +143,8 @@ class _MyHomePageState extends State<StepPage> with SingleTickerProviderStateMix
   void pauseAndPlayButtonPressed() {
     setState(() {
       if (stopwatch.isRunning) {
-        _animationController.reset();
         stopwatch.stop();
       } else {
-        _animationController.repeat();
         stopwatch.start();
         startTimer();
       }
@@ -160,10 +172,16 @@ class _MyHomePageState extends State<StepPage> with SingleTickerProviderStateMix
 
       if (_isPlayWorking) {
         _isPlayWorking = false;
+        _animationController.stop();
         sensorIsWorking = false;
         // cancelListening();
         pauseListening();
+
+
       } else {
+
+       // startServiceForPlatformAndroid();
+        _animationController.repeat();
         _isPlayWorking = true;
         sensorIsWorking = true;
         if (_streamSubscription.isPaused) {
@@ -280,166 +298,186 @@ class _MyHomePageState extends State<StepPage> with SingleTickerProviderStateMix
   @override
   Widget build(BuildContext context) {
     // TODO: implement build
-    return new Scaffold(
-        backgroundColor: Colors.white,
-        body: SafeArea(
-          child: Stack(
-            children: <Widget>[
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: FloatingActionButton(
-                  backgroundColor: Colors.transparent,
-                  child: Icon(
-                    FontAwesomeIcons.running,
-                    color: Colors.cyan,
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      localizationsDelegates:localizationDelegates(),
+      supportedLocales:supportedLanguages(),
+      localeResolutionCallback: localeResolutionCallback(),
+      home: new Scaffold(
+          backgroundColor: Colors.white,
+          body: SafeArea(
+            child: Stack(
+              children: <Widget>[
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: FloatingActionButton(
+                    backgroundColor: Colors.transparent,
+                    child: Icon(
+                      FontAwesomeIcons.running,
+                      color: Colors.cyan,
+                    ),
+                    onPressed: () {},
                   ),
-                  onPressed: () {},
                 ),
-              ),
-              Column(
-                children: <Widget>[
-                  SizedBox(
-                    height: 20.0,
-                  ),
-                  Text(
-                    "Bugünlük: $totalStepFromFireStore",
-                    style: TextStyle(
-                        color: Colors.deepPurpleAccent, fontSize: 22.0),
-                  ),
-                  SizedBox(
-                    height: 30.0,
-                  ),
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 30.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: <Widget>[
-                        FloatingActionButton(
-                          splashColor: Colors.deepOrange,
-                          backgroundColor: Colors.white,
-                          child: Icon(
-                            _isPlayWorking ? Icons.pause : Icons.play_arrow,
-                            color: Colors.cyan,
-                            size: 35.0,
-                          ),
-                          onPressed: () {
-                            playWorking();
-                            pauseAndPlayButtonPressed();
-                          },
-                        ),
-                        FloatingActionButton(
-                          splashColor: Colors.deepOrange,
-                          backgroundColor: Colors.cyan,
-                          child: Icon(
-                            Icons.add,
-                            size: 30.0,
-                          ),
-                          onPressed: () {
-                            //exerciseTimeAlert(context);
-                            Navigator.of(context).pushNamed("/exercise_screen");
-                          },
-                        )
-                      ],
+                Column(
+                  children: <Widget>[
+                    SizedBox(
+                      height: 20.0,
                     ),
-                  ),
-                  Expanded(
-                    flex: 1,
-                    child: Center(
-                        child: Container(
-                      width: MediaQuery.of(context).size.width / 1.8,
-                      height: MediaQuery.of(context).size.width / 1.8,
-                      child: LiquidCircularProgressIndicator(
-                        value: percentStepToTarget < 0.11 ? 0.1 : percentStepToTarget,
-                        animationController: _animationController,
-                        // Defaults to 0.5.
-                        valueColor: AlwaysStoppedAnimation(
-                          Colors.purpleAccent,
-                        ),
-                        // Defaults to the current Theme's accentColor.
-                        backgroundColor: Colors.white,
-                        // Defaults to the current Theme's backgroundColor.
-                        borderColor: Colors.cyan,
-                        borderWidth: 5.0,
-                        direction: Axis.vertical,
-                        center: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: <Widget>[
-                            Column(
-                              children: <Widget>[
-                                Text(
-                                  "Hedef",
-                                  style: TextStyle(fontSize: 24.0),
-                                  textAlign: TextAlign.center,
-                                ),
-                                Text(
-                                  "$targetSteps",
-                                  style: TextStyle(fontSize: 22.0),
-                                  textAlign: TextAlign.center,
-                                ),
-                              ],
+                    Text(
+                      "${AppLocalizations.of(context).translate(LocalizationConstants.for_today)} $totalStepFromFireStore",
+                      style: TextStyle(
+                          color: Colors.deepPurpleAccent, fontSize: 22.0),
+                    ),
+                    SizedBox(
+                      height: 30.0,
+                    ),
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 30.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: <Widget>[
+                          FloatingActionButton(
+                            splashColor: Colors.deepOrange,
+                            backgroundColor: Colors.white,
+                            child: Icon(
+                              _isPlayWorking ? Icons.pause : Icons.play_arrow,
+                              color: Colors.cyan,
+                              size: 35.0,
                             ),
-                            SizedBox(
-                              height: 20.0,
+                            onPressed: () {
+                              playWorking();
+                              pauseAndPlayButtonPressed();
+                            },
+                          ),
+                          FloatingActionButton(
+                            splashColor: Colors.deepOrange,
+                            backgroundColor: Colors.cyan,
+                            child: Icon(
+                              Icons.add,
+                              size: 30.0,
                             ),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: <Widget>[
-                                Icon(
-                                  FontAwesomeIcons.walking,
-                                  size: 30.0,
-                                  color: Colors.cyan,
-                                ),
-                                Text(
-                                  '$_stepCountValue',
-                                  style: TextStyle(
-                                      color: Colors.cyan, fontSize: 30.0),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
+                            onPressed: () {
+                              //exerciseTimeAlert(context);
+                              Navigator.of(context).pushNamed("/exercise_screen");
+                            },
+                          )
+                        ],
                       ),
-                    )),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 15.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: <Widget>[
-                        Expanded(
-                          flex: 1,
-                          child: CustomWidgetPair(
-                              iconColor: Colors.yellow,
-                              icon: FontAwesomeIcons.road,
-                              data: "$_distance",
-                              title: "Km",
-                              sizeBoxHeight: 5.0),
-                        ),
-                        Expanded(
-                          flex: 1,
-                          child: CustomWidgetPair(
-                              iconColor: Colors.orange,
-                              icon: FontAwesomeIcons.burn,
-                              data: "$_calories",
-                              title: "Kcal",
-                              sizeBoxHeight: 5.0),
-                        ),
-                        Expanded(
-                          flex: 1,
-                          child: CustomWidgetPair(
-                              iconColor: Colors.redAccent,
-                              icon: FontAwesomeIcons.stopwatch,
-                              data: '$walkingTimeDuration',
-                              title: "Yürüyüş Süresi",
-                              sizeBoxHeight: 5.0),
-                        )
-                      ],
                     ),
-                  )
-                ],
-              ),
-            ],
-          ),
-        ));
+                    Expanded(
+                      flex: 1,
+                      child: Center(
+                          child: Container(
+                        width: MediaQuery.of(context).size.width / 1.8,
+                        height: MediaQuery.of(context).size.width / 1.8,
+                        child: LiquidCircularProgressIndicatorCustomLCPI(
+                          animationController: _animationController,
+                          value: percentStepToTarget < 0.11 ? 0.1 : percentStepToTarget,
+                          // Defaults to 0.5.
+                          valueColor: AlwaysStoppedAnimation(
+                            Colors.purpleAccent,
+                          ),
+                          // Defaults to the current Theme's accentColor.
+                          backgroundColor: Colors.white,
+                          // Defaults to the current Theme's backgroundColor.
+                          borderColor: Colors.cyan,
+                          borderWidth: 5.0,
+                          direction: Axis.vertical,
+                          center: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: <Widget>[
+                              Column(
+                                children: <Widget>[
+                                  Text(
+                                    AppLocalizations.of(context).translate(LocalizationConstants.target),
+                                    style: TextStyle(fontSize: 24.0),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  Text(
+                                    "$targetSteps",
+                                    style: TextStyle(fontSize: 22.0),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ],
+                              ),
+                              SizedBox(
+                                height: 20.0,
+                              ),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: <Widget>[
+                                  Icon(
+                                    FontAwesomeIcons.walking,
+                                    size: 30.0,
+                                    color: Colors.cyan,
+                                  ),
+                                  Text(
+                                    '$_stepCountValue',
+                                    style: TextStyle(
+                                        color: Colors.cyan, fontSize: 30.0),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      )),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 15.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: <Widget>[
+                          Expanded(
+                            flex: 1,
+                            child: CustomWidgetPair(
+                                iconColor: Colors.yellow,
+                                icon: FontAwesomeIcons.road,
+                                data: "$_distance",
+                                title: "Km",
+                                sizeBoxHeight: 5.0),
+                          ),
+                          Expanded(
+                            flex: 1,
+                            child: CustomWidgetPair(
+                                iconColor: Colors.orange,
+                                icon: FontAwesomeIcons.burn,
+                                data: "$_calories",
+                                title: "Kcal",
+                                sizeBoxHeight: 5.0),
+                          ),
+                          Expanded(
+                            flex: 1,
+                            child: CustomWidgetPair(
+                                iconColor: Colors.redAccent,
+                                icon: FontAwesomeIcons.stopwatch,
+                                data: '$walkingTimeDuration',
+                                title: AppLocalizations.of(context).translate(LocalizationConstants.walking_time),
+                                sizeBoxHeight: 5.0),
+                          )
+                        ],
+                      ),
+                    )
+                  ],
+                ),
+              ],
+            ),
+          )),
+    );
   }
+
+
+  void startServiceForPlatformAndroid() async{
+    if(Platform.isAndroid){
+      var methodChannel=MethodChannel("com.example.denemee.messages");
+      String data=await methodChannel.invokeMethod("startService");
+      debugPrint(data);
+
+    }
+
+  }
+
+
+
 }

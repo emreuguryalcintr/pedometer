@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:numberpicker/numberpicker.dart';
@@ -5,12 +7,15 @@ import 'package:numberpicker/numberpicker.dart';
 
 class TimerText extends StatefulWidget {
   final String timeToDisplay;
+
+
   TimerText({this.timeToDisplay});
 
   _TimerTextState createState() => new _TimerTextState();
 }
 
 class _TimerTextState extends State<TimerText> {
+
 
 
   @override
@@ -21,6 +26,11 @@ class _TimerTextState extends State<TimerText> {
 }
 
 class TimerWidget extends StatefulWidget {
+  final String hourSymbol;
+  final String minuteSymbol;
+
+  TimerWidget({@required this.hourSymbol, @required this.minuteSymbol});
+
   @override
   _TimerWidgetState createState() => _TimerWidgetState();
 }
@@ -46,7 +56,7 @@ class _TimerWidgetState extends State<TimerWidget> {
                   children: <Widget>[
                     Padding(
                       padding: EdgeInsets.only(bottom: 10.0),
-                      child: Text("HH"),
+                      child: Text(widget.hourSymbol),
                     ),
                     NumberPicker.integer(
                         initialValue:hour,
@@ -67,7 +77,7 @@ class _TimerWidgetState extends State<TimerWidget> {
                   children: <Widget>[
                     Padding(
                       padding: EdgeInsets.only(bottom: 10.0),
-                      child: Text("MM"),
+                      child: Text(widget.minuteSymbol),
                     ),
                     NumberPicker.integer(
                         initialValue:minute,

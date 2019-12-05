@@ -1,0 +1,47 @@
+{
+  "daily": "Daily",
+  "exercise": "Exercise",
+  "analyse": "Analyse",
+  "settings": "Settings",
+  "time_constants": {
+    "hour": "Hour",
+    "minute": "Minute",
+    "seconds": "Second",
+    "hour_symbol": "HH",
+    "minute_symbol": "MM",
+    "minute_short":"min",
+    "second_symbol": "SS",
+    "hour_short": "h"
+  },
+
+  "exercise_type": "Exercise Type",
+  "finite_exercise": "Finite Exercise",
+  "infinite_exercise": "Infinite Exercise",
+  "finite": "Finite",
+  "infinite": "Infinite",
+  "start": "Start",
+  "cancel": "Cancel",
+  "completed": "Completed",
+  "uncompleted":"Uncompleted",
+  "today": "Today",
+  "for_today": "Today",
+  "tomorrow": "Tomorrow",
+  "this_week": "This Week",
+  "this_month": "This Month",
+  "please_wait": "Please Wait...",
+  "completion_status": "Completion Status",
+  "distance": "Distance",
+  "walking_time": "Walking Time",
+  "stop": "Stop",
+  "pause": "Pause",
+  "invalid_value": "Invalid Value",
+  "valid_value": "Valid Value",
+  "failed_registration": "Failed Registration",
+  "start_exercise": "Start Exercise",
+  "target": "Target",
+
+  "languages": {
+    "turkish": "Turkish",
+    "english": "English"
+  }
+}

@@ -1,17 +1,35 @@
-import 'package:denemee/custom_widgets/duration_widget/flutter_duration_picker.dart';
+import 'package:denemee/constants/general_constants.dart';
 import 'package:denemee/custom_widgets/start_button.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:denemee/custom_widgets/duration_widget/flutter_duration_picker.dart';
 
 class ExerciseTimeAlert extends StatefulWidget {
   final GestureTapCallback onPressedStart;
   final GestureTapCallback onPressedCancel;
   final Duration duration;
+  final Function(dynamic durationValue) durationData;
+  final Function(String exerciseType) exerciseType;
+  final String startText;
+  final String cancelText;
+  final String finiteExerciseText;
+  final String infiniteExerciseText;
+  final String shortMin;
+  final String shortHour;
 
-
-  ExerciseTimeAlert({@required this.onPressedStart,@required this.onPressedCancel,@required this.duration});
-
-  ExerciseTimeAlert.empty({this.onPressedStart,this.onPressedCancel, this.duration});
+  ExerciseTimeAlert({
+    @required this.onPressedStart,
+    @required this.onPressedCancel,
+    @required this.duration,
+    @required this.durationData,
+    @required this.exerciseType,
+    @required this.startText,
+    @required this.cancelText,
+    @required this.finiteExerciseText,
+    @required this.infiniteExerciseText,
+    @required this.shortMin,
+    @required this.shortHour,
+  });
 
   @override
   _ExerciseTimeAlertState createState() => _ExerciseTimeAlertState();
@@ -19,15 +37,14 @@ class ExerciseTimeAlert extends StatefulWidget {
 
 class _ExerciseTimeAlertState extends State<ExerciseTimeAlert> {
   Duration _duration;
-  int selectedRadio=1;
-  int timeInSeconds=0;
+  int selectedRadio = 1;
+  int timeInSeconds = 0;
 
   @override
   void initState() {
     super.initState();
     selectedRadio = 1;
-    _duration=widget.duration;
-
+    _duration = widget.duration;
   }
 
   setSelectedRadio(int val) {
@@ -35,8 +52,6 @@ class _ExerciseTimeAlertState extends State<ExerciseTimeAlert> {
       selectedRadio = val;
     });
   }
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -69,9 +84,11 @@ class _ExerciseTimeAlertState extends State<ExerciseTimeAlert> {
                       onChanged: (val) {
                         print("Radio $val");
                         setSelectedRadio(val);
+                        widget.exerciseType(
+                            GeneralConstants.EXERCISE_TYPE_INFINITE);
                       },
                     ),
-                    Text("Süresiz Egzersiz")
+                    Text(widget.infiniteExerciseText)
                   ],
                 ),
                 Column(
@@ -83,54 +100,57 @@ class _ExerciseTimeAlertState extends State<ExerciseTimeAlert> {
                       onChanged: (val) {
                         print("Radio $val");
                         setSelectedRadio(val);
+                        widget.exerciseType(
+                            GeneralConstants.EXERCISE_TYPE_FINITE);
                       },
                     ),
-                    Text("Süreli Egzersiz")
+                    Text(widget.finiteExerciseText)
                   ],
                 ),
               ],
             ),
-           _alertSelectedWidget()
-           ,
-
+            _alertSelectedWidget(),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: <Widget>[
                 WidgetStartExerciseButton(
-                  text: "Başlat",
+                  text: widget.startText,
                   onPressed: widget.onPressedStart,
                 ),
                 WidgetStartExerciseButton(
-                  text: "İptal",
+                  text: widget.cancelText,
                   onPressed: widget.onPressedCancel,
                 ),
               ],
             ),
-            SizedBox(height: 20.0,)
-
+            SizedBox(
+              height: 20.0,
+            )
           ],
         ),
       ),
     );
   }
 
-  Widget _alertSelectedWidget(){
-    switch(selectedRadio){
+  Widget _alertSelectedWidget() {
+    switch (selectedRadio) {
       case 2:
-        return  DurationPicker(
+        return DurationPicker(
+          shortHour: widget.shortHour,
+          shortMin: widget.shortMin,
           duration: _duration,
           colorAccent: Colors.cyan,
           onChange: (Duration value) {
             setState(() {
-              this._duration=value;
+              this._duration = value;
+              widget.durationData(_duration.inSeconds);
             });
           },
           snapToMins: 1,
         );
 
       default:
-
-        return Text("sınırsız ezgersiz");
+        return Text(widget.infiniteExerciseText);
     }
   }
 }

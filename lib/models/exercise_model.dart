@@ -69,12 +69,12 @@ class ExerciseModel {
     this.isCompleted=json[FireBaseConstants.isCompleted_constant];
   }
 
-  exerciseCompletedStatus(){
-    return isCompleted?"Tamamlandı":"Tamamlanmadı";
+  exerciseCompletedStatus(String completed,String uncompleted){
+    return isCompleted?completed:uncompleted;
   }
 
-  exerciseTypeStatus(){
-    return exerciseType=="infinite"?"Sınırsız":"10dk";
+  exerciseTypeStatus(String infinite,String exerciseTime){
+    return exerciseType=="infinite"?infinite:exerciseTime;
   }
 
 
