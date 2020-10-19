@@ -1,4 +1,4 @@
-# denemee
+# pedometer
 
 A new Flutter application.
 
